@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="">
+	<link rel="stylesheet" href="/style.css">
+	<title>Jeu de Hex</title>
+
+	<!--Font things-->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,500;0,600;0,700;1,800&family=Roboto:wght@100&display=swap" rel="stylesheet">
+
+	<!--Font Awesome Import-->
+	<script src="https://kit.fontawesome.com/f4651c1df1.js" crossorigin="anonymous"></script>
+
+
+	<!--Multiplayer with Firebase-->
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+	<script>
+		const firebaseConfig = {
+			apiKey: "AIzaSyBYQHzRCvBCVMG8XdtXFbebRLVOtpFtkfg",
+			authDomain: "jeu-de-hex.firebaseapp.com",
+			databaseURL: "https://jeu-de-hex-default-rtdb.europe-west1.firebasedatabase.app",
+			projectId: "jeu-de-hex",
+			storageBucket: "jeu-de-hex.appspot.com",
+			messagingSenderId: "1016555918295",
+			appId: "1:1016555918295:web:78c06848e43204a1dd7192"
+  		};
+		firebase.initializeApp(firebaseConfig);
+	</script>
+	
+
+
+</head>
+<body>
+	<div class="title--container">
+		<h1 onclick="startGame()">Jeu de Hex</h1>
+	</div>
+	
+
+	<div id="game--canvas" style="border: black solid 3px;">
+
+		<div class="panel"><p id="infoText">Welcome to this game! Press the title to start!<p></div>
+
+		<div id="board"></div>
+
+		<div class="panel" ><p id="infoText"></p><p id="helpText"></p></div>
+	</div>
+
+
+
+
+
+	<script src="/app.js"></script>
+
+</body>
+</html>

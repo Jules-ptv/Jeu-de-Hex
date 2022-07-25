@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="">
+	<link rel="stylesheet" href="/style.css">
+	<title>Waiting...</title>
+
+	<!--Font things-->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,500;0,600;0,700;1,800&family=Roboto:wght@100&display=swap" rel="stylesheet">
+
+	<!--Font Awesome Import-->
+	<script src="https://kit.fontawesome.com/f4651c1df1.js" crossorigin="anonymous"></script>
+
+	<!--Multiplayer with Firebase-->
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+	<script>
+		const firebaseConfig = {
+			apiKey: "AIzaSyBYQHzRCvBCVMG8XdtXFbebRLVOtpFtkfg",
+			authDomain: "jeu-de-hex.firebaseapp.com",
+			databaseURL: "https://jeu-de-hex-default-rtdb.europe-west1.firebasedatabase.app",
+			projectId: "jeu-de-hex",
+			storageBucket: "jeu-de-hex.appspot.com",
+			messagingSenderId: "1016555918295",
+			appId: "1:1016555918295:web:78c06848e43204a1dd7192"
+  		};
+		firebase.initializeApp(firebaseConfig);
+	</script>
+	<script src="/app.js"></script>
+
+</head>
+<body>
+	
+	<div id="wait--panel">
+		<p>Waiting for opponent...</p>
+		<i class="fa-solid fa-spinner"></i>
+	</div>
+
+	<div id="room--id--marker"></div>
+
+	<script>
+
+
+		//Just help function to create random Names
+
+		function randomFromArray(array){
+  			return array[Math.floor(Math.random()*array.length)];
+		}
+
+		function createName(){
+			const prefix=randomFromArray([
+				"COOL",
+				"SUPER",
+				"HIP",
+				"SMUG",
+				"COOL",
+				"SILKY",
+				"GOOD",
+				"SAFE",
+				"DEAR",
+				"DAMP",
+				"WARM",
+				"RICH",
+				"LONG",
+				"DARK",
+				"SOFT",
+				"BUFF",
+				"DOPE",
+				]);
+				const animal=randomFromArray([
+					"BEAR",
+					"DOG",
+					"CAT",
+					"FOX",
+					"LAMB",
+					"LION",
+					"BOAR",
+					"GOAT",
+					"VOLE",
+					"SEAL",
+					"PUMA",
+					"MULE",
+					"BULL",
+					"BIRD",
+					"BUG",
+					]);
+				return `${prefix} ${animal}`;
+		}
+		//Helper functions
+		function sleep(milliseconds) {
+			const date = Date.now();
+			let currentDate = null;
+			do {
+				currentDate = Date.now();
+			} while (currentDate - date < milliseconds);
+		}
+
+
+		(function(){
+
+			let roomId;
+			let roomRef;
+
+			firebase.auth().onAuthStateChanged((room) => {
+				if(room) {
+					//You're logged in!
+					roomId = room.uid;
+					roomRef = firebase.database().ref(`rooms/${roomId}`);
+
+					roomRef.set({
+						id:roomId,
+						name: createName(),
+						mode: "normal",
+						status:false,
+					})
+
+					//Now just add the roomId to make sure we know which one it is.
+					document.getElementById("room--id--marker").setAttribute('currentid',roomId);
+
+					roomRef.onDisconnect().remove();
+
+				} else {
+					//You're logged out.
+				}
+			})
+
+
+			firebase.auth().signInAnonymously().catch((error)=>{
+			var errorCode=error.code;
+			var errorMessage=error.message;
+			console.log(errorCode,errorMessage);
+			});
+
+
+			//Whenever a child changes, then check if it's our room that is ready for game.
+			const allRooms = firebase.database().ref(`rooms`);
+
+			allRooms.on("child_changed", (snapshot) => {
+				changedRoom = snapshot.val();
+
+				if(roomId == changedRoom.id){
+					//This means that another player joined MY game!
+					console.log("I found an opponent.");
+
+					let gameRef = firebase.database().ref(`games/${roomId}`);
+
+
+					//Size of the board
+					let size=9;
+					//(Just to initialize the board)
+					let boardModel = Array(9);
+					for (let i = 0; i < size; i++) {
+						boardModel[i] = Array(size).fill(0);	
+					}
+
+					gameRef.set({
+						id:roomId,
+						status: "in progress",
+						turn: 2,
+						board: boardModel,
+					})
+
+					startGame(roomId, 1);
+					
+					
+				}
+
+
+
+			})
+
+
+		})();
+
+
+		
+
+
+
+
+	</script>
+	
+
+
+</body>
+</html>
