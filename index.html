@@ -29,7 +29,10 @@
 
 	<div class="subtitle--container play--online">
 		<h2 class="play--button" onclick="hostGame()">Héberger une partie</h2>
-		
+	</div>
+
+	<div class="subtitle--container play--online">
+		<h2 class="play--button" onclick="playAI();">Jouer contre un ordinateur</h2>
 	</div>
 	
 	<script>
@@ -39,6 +42,10 @@
 
 		function playOnline(){
 			window.location.href = "/online-game.html"
+		}
+
+		function playAI(){
+			window.location.href = "/ai-game.html"
 		}
 	</script>
 
