@@ -135,7 +135,8 @@ h1 {
 	width:100px;
 
 	display: flex;
-	justify-content: center;
+	flex-direction: column;
+	justify-content: start	;
 }
 
 #infoText{
@@ -179,6 +180,22 @@ h1 {
 	height: calc(50% / 1.1547);
 	width: 50%;
 }
+
+.infoP{
+	color: black;
+	font-size: 6px;
+	z-index: 9999;
+	position: absolute;
+	
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	
+
+	width: var(--s);
+	height: calc(var(--s)*0.85);
+}
+
 
 
 
