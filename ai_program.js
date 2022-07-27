@@ -49,6 +49,9 @@ function startGame(){
 
 
 	createBoard();
+
+	
+	getShortestPath(new Hex(1,1),new Hex(3,3),board, 1);
 }
 
 
@@ -75,31 +78,37 @@ function createBoard() {
 		document.getElementById("board").appendChild(g);
 
 		for (j = 0; j < size; j++) {
-		let x = document.createElement("div");
-		x.setAttribute("row", i);
-		x.setAttribute("column", j);
-		x.setAttribute("id", "row" + (i) + "column" + (j));
-		x.setAttribute("class", "hexagon");
-		x.setAttribute(
-			"onclick",
-			'checkMove(this.getAttribute("row"),this.getAttribute("column"),1);'
-		);
+			let x = document.createElement("div");
+			x.setAttribute("row", i);
+			x.setAttribute("column", j);
+			x.setAttribute("id", "row" + (i) + "column" + (j));
+			x.setAttribute("class", "hexagon");
+			x.setAttribute(
+				"onclick",
+				'checkMove(this.getAttribute("row"),this.getAttribute("column"),1);'
+			);
 
-		let anotherDiv = document.createElement("div");
-		anotherDiv.setAttribute("class", "anotherDiv");
+			let anotherDiv = document.createElement("div");
+			anotherDiv.setAttribute("class", "anotherDiv");
 
-		let iconDiv = document.createElement("div");
-		iconDiv.setAttribute("class", "iconDiv");
-		anotherDiv.appendChild(iconDiv);
-		x.appendChild(anotherDiv);
+			let iconDiv = document.createElement("div");
+			iconDiv.setAttribute("class", "iconDiv");
+			anotherDiv.appendChild(iconDiv);
 
-		document.getElementById("row" + (i)).appendChild(x);
+			let infoP = document.createElement("p");
+			infoP.setAttribute("class", "infoP");
+			anotherDiv.appendChild(infoP);
+
+			x.appendChild(anotherDiv);
+
+			document.getElementById("row" + (i)).appendChild(x);
 		}
 	}
 }
 
 let infoText = document.getElementById("infoText");
 let helpText = document.getElementById("helpText");
+let victoryText = document.getElementById("victoryText");
 
 function updateMoves() {
 	switch (turn) {
@@ -212,8 +221,8 @@ function checkVictory() {
 		if (result) {
 			isGameOver = true;
 			alert("Player 1 won !");
-			infoText.innerHTML = "Player 1 won !";
-			return;
+			victoryText.innerHTML = "Player 1 won !";
+			return [true,1];
 		}
 		}
 	}
@@ -243,11 +252,14 @@ function checkVictory() {
 			if (result) {
 				isGameOver = true;
 				alert("Player 2 won !");
-				infoText.innerHTML = "Player 2 won !";
-				return;
+				victoryText.innerHTML = "Player 2 won !";
+				return [true,2];
 			}
 		}
 	}
+
+
+	return [false,undefined];
 }
 
 //Just another function to check the victory
@@ -327,27 +339,221 @@ function exploreBoard(x, y, olds, player, board) {
 }
 
 
-document.body.onkeyup = function (e) {
-	if (
-	e.key == " " ||
-	e.code == "Space" ||
-	(e.keyCode == 32 && document.title == "Jeu de Hex")
-	) {
+
+
+
+
+
+//------------ AI PART ------------
+
+
+
+
+
+
+
+
+function evaluatePosition(position){
+
+
+
+
+
+}
+
+
+class Hex {
+	constructor(x,y){
+		this.x = x;
+		this.y = y;
+	}
+}
+
+
+function getShortestDistance(origin, destination, position, interactor){
+
+	let response = getShortestPath(origin, destination, position, interactor);
+
+	return response.length;
+}
+
+
+//Get the shortest path between two Hexes, by using the A* Pathfinding algorithm (see https://www.youtube.com/watch?v=-L-WgKMFuhE&ab_channel=SebastianLague)
+function getShortestPath(origin, destination, position, interactor){
+
+
+	document.getElementById("row"+origin.x+"column"+origin.y).children[0].children[1].innerHTML = "Origin";
+	document.getElementById("row"+destination.x+"column"+destination.y).children[0].children[1].innerHTML = "Destination";
+
+
+	let open = []; //the set of nodes to be evaluated
+	let closed = []; //the set of nodes already evaluated
+
+	open.push(origin);
+
+	let current = origin;
+
+	let x=0;
+
+	while(x<10){
+
+		//Calculate F cost of every node in "open" array
+		let lowestFCost = Infinity;
+		let idLowestFCost = null;
+
+		for(let i=0; i<open.length; i++){
+			
+			let resultFCost = calculateFCost(origin, destination, current, open[i]);
+			if(resultFCost<=lowestFCost){ /*? < ou <= ?*/
+
+				lowestFCost = resultFCost;
+				idLowestFCost = i;
+			}
+
+		}
+
+		console.log("Lowest F Cost",lowestFCost, "The hex to choose :", open[idLowestFCost]);
+
+		current = open[idLowestFCost];
+
+		open.splice(idLowestFCost, 1);
+
+		closed.push(current);
+
+		console.log("Current : ",current);
+
+		if(current.x == destination.x && current.y == destination.y){
+			console.log("I found my destination, it's the best day of my life !!");
+			return "TO DO : return something..."//TO DO --- return something (array of path);
+		}
+
+
+		//Now we look for all the neighbours around current
+
+		const directions = [
+			[-1, 0],
+			[1, 0],
+			[0, -1],
+			[1, -1],
+			[0, 1],
+			[-1, 1],
+		];
+
+		for(let i=0; i<directions.length; i++){
+
+			let neighbour = new Hex(current.x+directions[i][0],current.y+directions[i][1]);
+
+			let isNeighbourInClosedArray = false;
+
+			for(let x =0;x<closed.length;x++){
+				if(closed[i].x==neighbour.x &&closed[i].y==neighbour.y){
+					isNeighbourInClosedArray = true;
+				}
+			}
+
+			if((position[neighbour.y][neighbour.x]==0 || position[neighbour.y][neighbour.x]==interactor)&& !isNeighbourInClosedArray){ /*WARNING BUG POSSIBILITY : It may be position[y][x], but i'm too dumb to figure that out 😶‍🌫️ */
+				//Neighbour seems okay, let's add it to open array;
+
+
+				
+
+
+
+			}
+
+		}
+	
+
+
+
+		x++;
+
+	}
+
+
+}
+
+
+
+function calculateFCost(origin, destination, from, to){
+
+	let gCost = getShortestDistanceNoObstacles(origin, to); //distance from starting node
+	let hCost = getShortestDistanceNoObstacles(to, destination); //distance from end node
+
+	return gCost+hCost;
+
+}
+
+
+function getShortestDistanceNoObstacles(from, to){
+
+	let total = Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
+
+	if((from.x < to.x && from.y > to.y)||(from.x > to.x && from.y < to.y)){
+		
+		total -= Math.abs(from.y - to.y)
+
+	}
+
+
+	return total;
+ 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.body.onkeydown = function (e) {
+
+	
+
 	let possibilities = [];
 	for (let i = 0; i < size; i++) {
 		for (let j = 0; j < size; j++) {
-		if (board[i][j] == 0) {
-			possibilities.push([i, j]);
-		}
+			if (board[i][j] == 0) {
+				possibilities.push([i, j]);
+			}
 		}
 	}
-	let randomElement =
-		possibilities[Math.floor(Math.random() * possibilities.length)];
 
-	checkMove(
-		parseInt(randomElement[0]),
-		parseInt(randomElement[1]),
-		1
-	);
+
+	if (e.key == " " || e.code == "Space" || (e.keyCode == 32 && document.title == "Jeu de Hex")) {
+		
+		let randomElement = possibilities[Math.floor(Math.random() * possibilities.length)];
+		
+		checkMove(parseInt(randomElement[0]), parseInt(randomElement[1]),1);
 	}
+
+	if(e.key == "r" || e.key == "R"){
+		startGame();
+	}
+
+	if(e.key == "v" || e.key == "V"){
+
+		for (let i = 0; i < 20; i++) {
+			let randomElement = possibilities[Math.floor(Math.random() * possibilities.length)];
+			checkMove(parseInt(randomElement[0]), parseInt(randomElement[1]),1);
+		}
+
+		
+	}
+
+
+	if(e.key=="d"){
+
+		console.log("d");
+
+	}
+
+
 };
