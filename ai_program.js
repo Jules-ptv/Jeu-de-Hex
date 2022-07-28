@@ -35,6 +35,8 @@ window.onload = () => {
 function startGame(){
 	isGameOver = false;
 
+
+
 	//Empty the variable board
 	board = Array(size);
 	for (let i = 0; i < size; i++) {
@@ -45,13 +47,17 @@ function startGame(){
 	moveCount=0;
 	helpText.innerHTML = moveCount;
 
+
+	//Reset turn
+	turn = 1;
+
 	console.log("Let's the game start!");
 
 
 	createBoard();
 
 	
-	getShortestPath(new Hex(1,1),new Hex(3,3),board, 1);
+	console.log(getShortestDistanceNoObstacles(new Hex(1,8), new Hex(5,2)));
 }
 
 
@@ -150,6 +156,8 @@ function checkMove(x, y,interactor) {
 			checkVictory();
 
 			updateMoves();
+
+			getShortestPath(new Hex(1,8),new Hex(5,2),board, 1);
 
 		} else {
 			console.log("Not your turn! Interactor : "+ interactor+", player's turn : "+ turn);
@@ -344,7 +352,7 @@ function exploreBoard(x, y, olds, player, board) {
 
 
 
-//------------ AI PART ------------
+//--------------- AI PART ---------------
 
 
 
@@ -363,11 +371,17 @@ function evaluatePosition(position){
 
 
 class Hex {
-	constructor(x,y){
+	constructor(x,y,gcost,fcost, parent){
 		this.x = x;
 		this.y = y;
+		this.gcost = gcost;
+		this.fcost = fcost;
+		this.parent = parent;
+
 	}
 }
+
+
 
 
 function getShortestDistance(origin, destination, position, interactor){
@@ -381,10 +395,13 @@ function getShortestDistance(origin, destination, position, interactor){
 //Get the shortest path between two Hexes, by using the A* Pathfinding algorithm (see https://www.youtube.com/watch?v=-L-WgKMFuhE&ab_channel=SebastianLague)
 function getShortestPath(origin, destination, position, interactor){
 
+	console.log(position);
 
-	document.getElementById("row"+origin.x+"column"+origin.y).children[0].children[1].innerHTML = "Origin";
-	document.getElementById("row"+destination.x+"column"+destination.y).children[0].children[1].innerHTML = "Destination";
+	document.getElementById("row"+origin.y+"column"+origin.x).children[0].children[1].innerHTML = "Origin";
+	document.getElementById("row"+destination.y+"column"+destination.x).children[0].children[1].innerHTML = "Destination";
 
+	origin.fcost = 0;
+	origin.gcost = 0;
 
 	let open = []; //the set of nodes to be evaluated
 	let closed = []; //the set of nodes already evaluated
@@ -395,76 +412,111 @@ function getShortestPath(origin, destination, position, interactor){
 
 	let x=0;
 
-	while(x<10){
+	while(x<150){
 
 		//Calculate F cost of every node in "open" array
 		let lowestFCost = Infinity;
 		let idLowestFCost = null;
+		
 
 		for(let i=0; i<open.length; i++){
 			
-			let resultFCost = calculateFCost(origin, destination, current, open[i]);
-			if(resultFCost<=lowestFCost){ /*? < ou <= ?*/
+			//let resultCosts = calculateCosts(origin, destination, current, open[i]);
+			
+			
+			
 
-				lowestFCost = resultFCost;
+			document.getElementById("row"+open[i].y+"column"+open[i].x).children[0].children[1].innerHTML = "F : "+open[i].fcost+", G : "+open[i].gcost;
+
+			if(open[i].fcost<=lowestFCost){ /*? < ou <= ?*/
+
+				lowestFCost = open[i].fcost;
 				idLowestFCost = i;
 			}
 
 		}
 
-		console.log("Lowest F Cost",lowestFCost, "The hex to choose :", open[idLowestFCost]);
-
+		
 		current = open[idLowestFCost];
 
 		open.splice(idLowestFCost, 1);
 
-		closed.push(current);
+		closed.push("Current", current);
 
-		console.log("Current : ",current);
 
 		if(current.x == destination.x && current.y == destination.y){
 			console.log("I found my destination, it's the best day of my life !!");
+
+			let pathTaken = [current];
+			let retraceHex = current;
+			while(retraceHex.parent != undefined){
+				pathTaken.push(retraceHex.parent);
+				retraceHex = retraceHex.parent;
+			}
+			
+			unHighlightHexes();
+
+			console.log("Retraçage",pathTaken);
+
+			highlitHexes(pathTaken,"red");
+
 			return "TO DO : return something..."//TO DO --- return something (array of path);
 		}
 
 
 		//Now we look for all the neighbours around current
-
-		const directions = [
-			[-1, 0],
-			[1, 0],
-			[0, -1],
-			[1, -1],
-			[0, 1],
-			[-1, 1],
-		];
-
-		for(let i=0; i<directions.length; i++){
-
-			let neighbour = new Hex(current.x+directions[i][0],current.y+directions[i][1]);
-
-			let isNeighbourInClosedArray = false;
-
-			for(let x =0;x<closed.length;x++){
-				if(closed[i].x==neighbour.x &&closed[i].y==neighbour.y){
-					isNeighbourInClosedArray = true;
-				}
-			}
-
-			if((position[neighbour.y][neighbour.x]==0 || position[neighbour.y][neighbour.x]==interactor)&& !isNeighbourInClosedArray){ /*WARNING BUG POSSIBILITY : It may be position[y][x], but i'm too dumb to figure that out 😶‍🌫️ */
-				//Neighbour seems okay, let's add it to open array;
-
-
-				
-
-
-
-			}
-
-		}
+			const directions = [
+				[-1, 0],
+				[1, 0],
+				[0, -1],
+				[1, -1],
+				[0, 1],
+				[-1, 1],
+			];
 	
+			for(let i=0; i<directions.length; i++){
+	
+				if( ! ((0<=current.x+directions[i][0] && current.x+directions[i][0]<size) && (0<=current.y+directions[i][1] && current.y+directions[i][1]<size))){
+					
+					continue;
+				}
 
+	
+				let neighbour = new Hex(current.x+directions[i][0],current.y+directions[i][1]);
 
+				if(isHexInArray(neighbour,open)){
+					neighbour = hexInArray(neighbour,open);
+				}
+	
+	
+				if((position[neighbour.y][neighbour.x]==0 || position[neighbour.y][neighbour.x]==interactor)&& !isHexInArray(neighbour,closed)){ /*WARNING BUG POSSIBILITY : It may be position[y][x], but i'm too dumb to figure that out 😶‍🌫️ */
+					//Neighbour seems okay, let's add it to open array;
+					
+					let resultCosts = calculateCosts(origin, destination, current, neighbour);
+
+					console.log("NEIGHBOUR ("+neighbour.x+", "+neighbour.y +")'s F cost : "+ resultCosts.fcost+". Old one was "+neighbour.fcost);
+				
+					if(resultCosts.fcost < neighbour.fcost || !isHexInArray(neighbour, open)){
+	
+						neighbour.fcost = resultCosts.fcost;
+						neighbour.gcost = resultCosts.gcost;
+						neighbour.parent = current;
+	
+						if(!isHexInArray(neighbour, open)){
+							
+							open.push(neighbour);
+						}
+	
+					}
+	
+	
+	
+				}
+	
+			}
+		
+
+		
 
 		x++;
 
@@ -474,15 +526,45 @@ function getShortestPath(origin, destination, position, interactor){
 }
 
 
+function calculateCosts(orig, desti, from, to){
 
-function calculateFCost(origin, destination, from, to){
+	let gCost = 0;//distance from starting node
+	if(!(from.x==to.x && from.y==to.y)){
+		gCost = from.gcost + 1;
+	}
+	 
+	let hCost = getShortestDistanceNoObstacles(to, desti); //distance from end node
 
-	let gCost = getShortestDistanceNoObstacles(origin, to); //distance from starting node
-	let hCost = getShortestDistanceNoObstacles(to, destination); //distance from end node
 
-	return gCost+hCost;
+
+
+	return {"fcost":gCost+hCost,"gcost":gCost,"hcost":hCost};
 
 }
+
+function isHexInArray(hex, array){
+	for(let i = 0; i<array.length; i++){
+		if(array[i].x ==hex.x && array[i].y == hex.y){
+			return true;
+		}
+	}
+	return false;
+}
+
+function hexInArray(hex, array){
+	for(let i = 0; i<array.length; i++){
+		if(array[i].x ==hex.x && array[i].y == hex.y){
+			return array[i];
+		}
+	}
+	return undefined;
+}
+
+
+
+
+
+
 
 
 function getShortestDistanceNoObstacles(from, to){
@@ -491,7 +573,7 @@ function getShortestDistanceNoObstacles(from, to){
 
 	if((from.x < to.x && from.y > to.y)||(from.x > to.x && from.y < to.y)){
 		
-		total -= Math.abs(from.y - to.y)
+		total -= Math.min(Math.abs(from.y - to.y),Math.abs(from.x - to.x));
 
 	}
 
@@ -499,6 +581,33 @@ function getShortestDistanceNoObstacles(from, to){
 	return total;
  
 }
+
+
+
+function highlitHexes(arrayOfHexes,color){
+
+	for(let i=0; i<arrayOfHexes.length; i++){
+		let myHex = document.getElementById("row"+arrayOfHexes[i].y+"column"+arrayOfHexes[i].x);
+
+		myHex.style.setProperty("--cell-color",color);
+	}
+
+}
+
+function unHighlightHexes(arrayOfHexes){
+
+	for(let i=0; i<size; i++){
+
+		for(let j = 0; j<size; j++){
+			document.getElementById("row"+i+"column"+j).style.setProperty("--cell-color","rgb(92, 92, 255)");
+		}
+		
+
+		
+	}
+
+}
+
 
 
 
