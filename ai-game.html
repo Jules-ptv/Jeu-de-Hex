@@ -21,7 +21,7 @@
 </head>
 <body>
 	<div class="title--container">
-		<h1 onclick="startGame()">Jeu de Hex</h1>
+		<h1 onclick="getTime()">Jeu de Hex</h1>
 	</div>
 	
 
@@ -31,11 +31,14 @@
 
 		<div id="board"></div>
 
-		<div class="panel" ><p id="helpText"></p><p id="victoryText1"></p><p id="victoryText2"></p></div>
+		<div class="panel" ><p id="helpText"></p><p id="victoryText"></p></div>
 	</div>
 
 
-
+	
+	<div class="help--container">
+		<p id="helpButton" onclick="help();">Help</p>
+	</div>
 
 
 	<script src="/ai_program.js"></script>

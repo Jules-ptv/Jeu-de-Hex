@@ -32,10 +32,39 @@
 	</div>
 
 	<div class="subtitle--container play--online">
-		<h2 class="play--button" onclick="playAI();">Jouer contre un ordinateur</h2>
+		<h2 class="play--button" onclick="selectDifficulty();">Jouer contre un ordinateur</h2>
 	</div>
+
+	<div class="options" id="options">
+
+		<div class="size">
+			<input type="number" name="boardSize" min="2" max="9" id="boardSizeIndicator" required value="4">
+		</div>
+
+		<div class="difficulties" id="difficulties">
+			<div class="difficulty">
+				<p id="easy" onclick="playAI(this.id)">Facile</p>
+			</div>
+			<div class="difficulty">
+				<p id="medium"  onclick="playAI(this.id)">Moyen</p>
+			</div>
+			<div class="difficulty" >
+				<p id="impossible"  onclick="playAI(this.id)">Impossible</p>
+			</div>
+		</div>
+
+	</div>
+
+	
 	
 	<script>
+		window.onload = () => {
+			document.getElementById('options').style.display = "none";
+		}
+
+
+
+
 		function hostGame(){
 			window.location.href = "/waiting.html"
 		}
@@ -44,11 +73,30 @@
 			window.location.href = "/online-game.html"
 		}
 
-		function playAI(){
-			window.location.href = "/ai-game.html"
+		function selectDifficulty(){
+			if(document.getElementById('options').style.display == "none"){
+				document.getElementById('options').style.display = "flex";
+			} else{
+				console.log("Hid it!");
+				document.getElementById('options').style.display = "none";
+			}
+
 		}
+
+		function playAI(difficulty){
+			window.location.href = "/ai-game.html?difficulty="+difficulty+"&size="+document.getElementById('boardSizeIndicator').value;
+		}
+
+		
 	</script>
 
+
+	<footer>
+		<p>©<span id="creditsYear">2022</span>, by Jules Poitevin</p>
+		<script>
+			document.getElementById('creditsYear').innerHTML = new Date().getFullYear();
+		</script>
+	</footer>
 
 </body>
 </html>

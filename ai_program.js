@@ -1,4 +1,5 @@
-const size = 9;
+let size = 5;
+let DEPTH = 2;
 const AI_TURN = 2;
 
 let moveCount = 0;
@@ -24,17 +25,68 @@ function sleep(milliseconds) {
 }
 
 
+function setDifficulty(text){
+	if(text=="easy"){
+		console.log("Allright easy! ");
+		DEPTH = 1;
+	} else if(text == "medium"){
+		DEPTH = 2;
+	} else if(text == "impossible"){
+		DEPTH = 3;
+	}
+}
+
+function setSize(number){
+	size = number;
+}
+
+
+function getTime(){
+	let start = Date.now();
+	parseInt(dijkstraAlgorithm(board, new Hex("T","T", undefined, undefined, undefined, true), new Hex("D","D", undefined, undefined, undefined, true), 1));
+
+	let duration = Date.now() - start;
+
+	console.log("Duration : "+duration+" ms.");
+}
+
+
+function help(){
+	dijkstraAlgorithm(board, new Hex("T","T", undefined, undefined, undefined, true), new Hex("D","D", undefined, undefined, undefined, true), 1);
+}
+
+
 
 window.onload = () => {
 	
+	//	createBoard();
+
 	startGame();
 
 };
 
 
 function startGame(){
+	
 	isGameOver = false;
 
+
+	//Defines difficulty and size
+
+	let urlParams = new URLSearchParams(window.location.search);
+	if(urlParams.has("difficulty")){
+		console.log("difficulty : "+urlParams.get("difficulty"));
+		setDifficulty(urlParams.get("difficulty"));
+	} else{
+		DEPTH = 2;
+	}
+
+	if(urlParams.has("size")){
+		console.log("size : "+urlParams.get("size"));
+		setSize(parseInt(urlParams.get("size")));
+	} else{
+		size = 4;
+	}
 
 
 	//Empty the variable board
@@ -49,12 +101,22 @@ function startGame(){
 
 
 	//Reset turn
-	turn = 1;
+	turn = 2;
+
+
+	//Reset panels
+	victoryText.innerHTML = "";
+	
+	
 
 	console.log("Let's the game start!");
 
-
 	createBoard();
+
+	if(turn==AI_TURN){
+		callsAi();
+	}
+
 
 }
 
@@ -112,8 +174,8 @@ function createBoard() {
 
 let infoText = document.getElementById("infoText");
 let helpText = document.getElementById("helpText");
-let victoryText1 = document.getElementById("victoryText1");
-let victoryText2 = document.getElementById("victoryText2");
+let victoryText = document.getElementById("victoryText");
+
 
 function updateMoves() {
 	switch (turn) {
@@ -143,7 +205,7 @@ function checkMove(x, y,interactor) {
 	y = parseInt(y);
 
 	if (board[x][y] == 0) {
-		if (interactor == turn /*TO REMOVE */ || true) {
+		if (interactor == turn) {
 			
 			board[x][y] = turn;
 
@@ -152,14 +214,24 @@ function checkMove(x, y,interactor) {
 
 			addPiece(x,y,turn);
 
-			checkVictory();
-
+			let resultVictory = checkVictory(board);
+			if(resultVictory[0]){
+				victoryText.innerHTML = "Player " + resultVictory[1] +" won !";
+				alert("Player "+resultVictory[1]+" won !");
+				isGameOver = true;
+			}
+			
+			
 			updateMoves();
 			
 			unHighlightHexes();
 
-			dijkstraAlgorithm(board, new Hex("T","T", undefined, undefined, undefined, true), new Hex("D","D", undefined, undefined, undefined, true), 1);
-			dijkstraAlgorithm(board, new Hex("L","L", undefined, undefined, undefined, true), new Hex("R","R", undefined, undefined, undefined, true), 2);
+			if(turn==AI_TURN){
+				callsAi();
+			}
+				
+			
+			
 		} else {
 			console.log("Not your turn! Interactor : "+ interactor+", player's turn : "+ turn);
 		}
@@ -197,7 +269,7 @@ function addPiece(x, y, playerParam) {
 }
 
 
-function checkVictory() {
+function checkVictory(position) {
 
 	if(moveCount>size**2){
 		isGameOver=true;
@@ -215,22 +287,20 @@ function checkVictory() {
 
 	//Just to limit the amount of calculation to find a valid path
 	for (let item = 0; item < size; item++) {
-		if (board[0][item] == 1) {
+		if (position[0][item] == 1) {
 		step1 = true;
 		x1.push(item);
 		}
-		if (board[size - 1][item] == 1) {
+		if (position[size - 1][item] == 1) {
 		step2 = true;
 		}
 	}
 
 	if (step1 && step2) {
 		for (let possibleStart = 0; possibleStart < x1.length; possibleStart++) {
-		let result = exploreBoard(x1[possibleStart], 0, [], 1, board);
+		let result = exploreBoard(x1[possibleStart], 0, [], 1, position);
 		if (result) {
-			isGameOver = true;
-			alert("Player 1 won !");
-			victoryText1.innerHTML = "Player 1 won !";
+			//alert("Player 1 won !");
 			return [true,1];
 		}
 		}
@@ -246,22 +316,20 @@ function checkVictory() {
 
 	//Just to limit the amount of calculation to find a valid path
 	for (let item = 0; item < size; item++) {
-		if (board[item][0] == 2) {
+		if (position[item][0] == 2) {
 		step21 = true;
 		x21.push(item);
 		}
-		if (board[item][size - 1] == 2) {
+		if (position[item][size - 1] == 2) {
 		step22 = true;
 		}
 	}
 
 	if (step21 && step22) {
 		for (let possibleStart = 0; possibleStart < x21.length; possibleStart++) {
-			let result = exploreBoard(0, x21[possibleStart], [], 2, board);
+			let result = exploreBoard(0, x21[possibleStart], [], 2, position);
 			if (result) {
-				isGameOver = true;
-				alert("Player 2 won !");
-				victoryText1.innerHTML = "Player 2 won !";
+				//alert("Player 2 won !");
 				return [true,2];
 			}
 		}
@@ -356,6 +424,107 @@ function exploreBoard(x, y, olds, player, board) {
 //--------------- AI PART ---------------
 
 
+function callsAi(){
+	console.log("Bip boup, i'm thinking until "+DEPTH);
+	//If move is to ai, then call the ai : 
+	if((turn == AI_TURN && !isGameOver)){
+
+		let resultMinimax = minimax(board, DEPTH, false);
+
+		console.log("Score : "+resultMinimax[0]);
+
+		checkMove(resultMinimax[1][1],resultMinimax[1][0],2);
+		//console.log(evaluatePosition(board));
+	}
+}
+
+
+function minimax(position, depth, isMaximizingPlayer){
+
+	//console.log("Searching at depth "+depth)
+
+	if(depth==0 || checkVictory(position)[0]){
+		let resultEvaluate = evaluatePosition(position);
+		return [resultEvaluate,undefined];
+	}
+
+	if(isMaximizingPlayer){
+
+		let maxEval = -Infinity;
+		let maxEvalMove = undefined;
+
+		for(let i = 0; i<size; i++){
+			
+			for(let j = 0; j<size; j++){
+
+				if(position[i][j]==0){
+
+					let childPosition = copyArray(position);
+
+					childPosition[i][j] = 1;
+					
+					let eval = minimax(childPosition, depth-1, false)[0];
+					if(eval>=maxEval){ //POSSIBLE BUG HERE (> and >=)
+						maxEval = eval;
+						maxEvalMove = [j,i];
+					}
+
+					//alpha = Math.max(alpha, eval);
+					//if(beta <= alpha){
+					//	break;
+					//}
+					
+					
+				}
+
+			}
+
+		}
+		//console.log([maxEval, maxEvalMove])
+		return [maxEval,maxEvalMove];
+
+	} else{
+
+		let minEval = +Infinity;
+		let minEvalMove = undefined;
+
+		for(let i = 0; i<size; i++){
+			
+			for(let j = 0; j<size; j++){
+
+				if(position[i][j]==0){
+
+					let childPosition = copyArray(position);
+
+					childPosition[i][j] = 2;
+
+					let eval = minimax(childPosition, depth-1, true)[0];
+					if(eval<=minEval){ //POSSIBLE BUG HERE (> and >=)
+						minEval = eval;
+						minEvalMove = [j,i];
+					}
+					
+					//beta = Math.min(beta, eval);
+
+					//if(beta<=alpha){
+					//	break;
+					//}
+
+				}
+
+			}
+
+		}
+		//console.log([minEval, minEvalMove])
+		return [minEval,minEvalMove];
+
+
+	}
+
+
+
+}
+
 
 
 
@@ -363,8 +532,20 @@ function exploreBoard(x, y, olds, player, board) {
 
 
 function evaluatePosition(position){
+	let victoryResult = checkVictory(position);
+	if(victoryResult[0]){
+		if(victoryResult[1]==1){
+			return Infinity;
+		} else{
+			return - Infinity;
+		}
+	}
 
+	let result1 = parseInt(dijkstraAlgorithm(position, new Hex("T","T", undefined, undefined, undefined, true), new Hex("D","D", undefined, undefined, undefined, true), 1));
 
+	let result2 = parseInt(dijkstraAlgorithm(position, new Hex("L","L", undefined, undefined, undefined, true), new Hex("R","R", undefined, undefined, undefined, true), 2));
+	
+	return result2-result1;
 
 
 
@@ -438,6 +619,7 @@ function dijkstraAlgorithm(position, origin, destination, interactor){
 	while(visitedNodes.length != nodes.length){
 
 
+		//console.log(nodes, visitedNodes, results);
 
 		let current;
 
@@ -447,7 +629,8 @@ function dijkstraAlgorithm(position, origin, destination, interactor){
 		let lowestDistance = Infinity;
 		let idLowestDistance = undefined;
 		for(let i = 0; i<nodes.length; i++){
-			if(results["x"+nodes[i].x+"y"+nodes[i].y].shortestDistanceFromOrigin < lowestDistance && !isHexInArray(nodes[i],visitedNodes)){
+			if(results["x"+nodes[i].x+"y"+nodes[i].y].shortestDistanceFromOrigin <= lowestDistance && !isHexInArray(nodes[i],visitedNodes)){
+				//console.log("Okay current defined");
 				lowestDistance = results["x"+nodes[i].x+"y"+nodes[i].y].shortestDistanceFromOrigin;
 				idLowestDistance = i;
 			}
@@ -495,12 +678,16 @@ function dijkstraAlgorithm(position, origin, destination, interactor){
 
 		let hexesToHighlite = getShortestPath(current, results["x"+current.x+"y"+current.y].previous, position, interactor);
 
+		if(hexesToHighlite!=undefined && hexesToHighlite!=null){
+			if(interactor==1){
+				
+				highlitHexes(hexesToHighlite, "green");
+			} else{
+				highlitHexes(hexesToHighlite, "red");
+			}
+		}	
 
-		if(interactor==1){
-			highlitHexes(hexesToHighlite, "green");
-		} else{
-			highlitHexes(hexesToHighlite, "red");
-		}
+		
 		
 		current = results["x"+current.x+"y"+current.y].previous;
 
@@ -510,10 +697,6 @@ function dijkstraAlgorithm(position, origin, destination, interactor){
 		}
 
 	}
-
-
-
-	document.getElementById("victoryText"+interactor).innerHTML = minimalDistance+" jetons restants pour Joueur " +interactor;
 
 	return minimalDistance;
 
@@ -634,8 +817,8 @@ function getShortestPath(origin, destination, position, interactor){
 			//Start before T, D, L, R
 			//console.log(origin, destination);
 
-			document.getElementById("row"+origin.y+"column"+origin.x).children[0].children[1].innerHTML = "Origin";
-			document.getElementById("row"+destination.y+"column"+destination.x).children[0].children[1].innerHTML = "Destination";
+			//document.getElementById("row"+origin.y+"column"+origin.x).children[0].children[1].innerHTML = "Origin";
+			//document.getElementById("row"+destination.y+"column"+destination.x).children[0].children[1].innerHTML = "Destination";
 
 			origin.fcost = 0;
 			origin.gcost = 0;
@@ -883,6 +1066,32 @@ function unHighlightHexes(arrayOfHexes){
 
 }
 
+function freeHexes(position){
+	let final = [];
+	for(let i = 0; i<size; i++){
+		for(let j = 0; j<size; j++){
+			if(position[j][i]==0){
+				final.push([i,j]);
+			}
+		}
+	}
+
+	return final;
+}
+
+
+function copyArray(position){
+	let final = [];
+	for(let i = 0; i<position.length; i++){
+		final.push([]);
+		for(let j = 0; j<position[i].length;j++){
+
+			final[i].push(position[i][j])
+		}
+	}
+
+	return final;
+}
 
 
 
